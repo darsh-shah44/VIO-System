@@ -3,33 +3,42 @@
 #include <iostream>
 
 int main() {
-    // Load first image
-    std::string img_path = "C:\\Projects\\VIO\\data\\MH_01_easy\\MH_01_easy\\mav0\\cam0\\data\\1403636579763555584.png";
+    std::string img1_path = "C:\\Projects\\VIO\\data\\MH_01_easy\\MH_01_easy\\mav0\\cam0\\data\\1403636579763555584.png";
+    std::string img2_path = "C:\\Projects\\VIO\\data\\MH_01_easy\\MH_01_easy\\mav0\\cam0\\data\\1403636580163555584.png";
+
+    cv::Mat img1 = cv::imread(img1_path, cv::IMREAD_GRAYSCALE);
+    cv::Mat img2 = cv::imread(img2_path, cv::IMREAD_GRAYSCALE);
     
-    cv::Mat img = cv::imread(img_path, cv::IMREAD_GRAYSCALE);
-    
-    if (img.empty()) {
-        std::cerr << "Failed to load image! Check path." << std::endl;
+    if (img1.empty() || img2.empty()) {
+        std::cerr << "Failed to load images! Check path." << std::endl;
         return -1;
     }
     
-    std::cout << "✓ Image loaded: " << img.cols << "x" << img.rows << std::endl;
+    std::cout << "✓ Images Loaded" << std::endl;
     
-    // Detect ORB features
     cv::Ptr<cv::ORB> orb = cv::ORB::create(2000);
-    std::vector<cv::KeyPoint> keypoints;
+
+    std::vector<cv::KeyPoint> keypoints1, keypoints2;
+    cv::Mat descriptors1, descriptors2;
     
-    orb->detect(img, keypoints);
+    orb->detectAndCompute(img1, cv::Mat(), keypoints1, descriptors1);
+    orb->detectAndCompute(img2, cv::Mat(), keypoints2, descriptors2);
     
-    std::cout << "✓ Detected " << keypoints.size() << " features" << std::endl;
+    std::cout << "✓ Detected " << keypoints1.size() << " features in image 1 and " << keypoints2.size() << " in image 2" << std::endl;
     
-    // Draw and display
-    cv::Mat img_with_keypoints;
-    cv::drawKeypoints(img, keypoints, img_with_keypoints, cv::Scalar(0, 255, 0));
+    cv::BFMatcher matcher(cv::NORM_HAMMING);
+    std::vector<cv::DMatch> matches;
+
+    matcher.match(descriptors1, descriptors2, matches);
+
+    std::cout << "✓ Found " << matches.size() << " matches" << std::endl;
     
-    cv::imshow("Features", img_with_keypoints);
+    cv::Mat img_matches;
+    cv::drawMatches(img1, keypoints1, img2, keypoints2, matches, img_matches);
+    
+    cv::imshow("Matches", img_matches);
     std::cout << "Press any key to exit..." << std::endl;
     cv::waitKey(0);
-    
+
     return 0;
 }

@@ -32,7 +32,27 @@ int main() {
     matcher.match(descriptors1, descriptors2, matches);
 
     std::cout << "✓ Found " << matches.size() << " matches" << std::endl;
+
+    std::vector<cv::Point2f> points1, points2;
+    for(const auto& match : matches) {
+        points1.push_back(keypoints1[match.queryIdx].pt);
+        points2.push_back(keypoints2[match.trainIdx].pt);
+    }
+
+    std::cout << "✓ Extracted " << points1.size() << " point correspondences" << std::endl;
+
+    double focal_length = 458.654;
+    cv::Point2d principal_point(367.215, 248.375);
+
+    cv::Mat E = cv::findEssentialMat(points1, points2, focal_length, principal_point, cv::RANSAC);
     
+    cv::Mat R, t;
+    cv::recoverPose(E, points1, points2, R, t, focal_length, principal_point);
+    
+    std::cout << "\n=== Camera Motion ===" << std::endl;
+    std::cout << "Rotation matrix R:\n" << R << std::endl;
+    std::cout << "\nTranslation vector t:\n" << t << std::endl;
+
     cv::Mat img_matches;
     cv::drawMatches(img1, keypoints1, img2, keypoints2, matches, img_matches);
     
